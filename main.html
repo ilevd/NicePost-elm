@@ -1,0 +1,350 @@
+<!DOCTYPE html>
+<html>
+	
+	<head>
+		<title>NicePost</title>
+		<meta http-equiv="Content-Language" Content="ru"/>
+		<meta charset="UTF-8">
+		<!--script type="text/javascript" src="resources/elm-runtime-compressed.js"></script>
+		<script type="text/javascript" src="build/Nicepost.js"></script-->
+		<!--script type="text/javascript" src="elm.js"></script-->
+		<script type="text/javascript" src="elm-compress.js"></script>
+		<script type="text/javascript" src="resources/groups.js"></script>
+		<script type="text/javascript" src="resources/jsonp.js"></script>
+		<link rel="stylesheet" type="text/css" href="resources/style.css">
+		<script src="//vk.com/js/api/xd_connection.js?2"  type="text/javascript"></script>
+	</head>
+
+	<body>
+		<div id="elm-vk" style="margin-left: auto; margin-right: auto; left: 0px; right:0px;"></div>
+	</body>
+
+	<script type="text/javascript">
+
+
+		var viewer_id;
+		var jsonpCount = 0;
+
+		var currentGroup = 0;
+		var currentGroupOffset = 0;
+		var currentGroupMax = 0;
+
+		var appHeight = 1000;
+		var appWidth = 930;
+
+		var windowHeight = 1000;
+		var windowScrollTop = 0;
+
+		var lastGetTime = (new Date()).getTime();
+
+		var div = document.getElementById('elm-vk');
+		var vk = Elm.embed(Elm.Nicepost, div, {
+			getGroups: [],
+			getWallPosts: [0, []],
+			resize: [1000, 0],
+			getPostGroups: [],
+			getPostFriends: []
+		} );
+		
+
+
+		VK.init(function() {
+				console.log("VK init success");
+				VK.addCallback("onScroll", onVkScroll);
+				VK.addCallback("onWindowResized", onVkWindowResized);
+				VK.callMethod("scrollSubscribe", true)
+			}, function() {
+				console.log("VK init fail");
+		}, '5.26');
+
+
+
+		function parseVkData(){
+ 			var rawData = document.location.search.substr(1).split("&");
+            var data = {};
+            for (i = 0; i < rawData.length; i++) {
+                var keyValue = rawData[i].split('=');
+                data[ keyValue[0] ] = keyValue[1];
+            }
+            //console.log(decodeURIComponent(  data["api_result"] ));
+            //console.log(data["viewer_id"])
+            viewer_id = data["viewer_id"];
+            var api_result = JSON.parse(decodeURIComponent(  data["api_result"] ));  
+ 		}
+ 		parseVkData();
+
+
+ 		function getVKInfo(){
+ 			var code = 'return {admin_groups: API.groups.get({filter:"moder", extended:1}), groups: API.groups.get({fields:"can_post,status", extended:1}), friends:API.friends.get({  fields:"uid, first_name, last_name,city,photo_big,photo,sex,bdate,can_post"   }), appFriends:API.getAppFriends()    };';
+ 			VK.api("execute", {code:code, v: "5.26"}, function(response){
+ 				//console.log("Execute: " + JSON.stringify(response));
+ 				Groups.My = response.response.groups.items;
+ 				var friends = response.response.friends.items;
+ 				var admin_groups = response.response.admin_groups.items
+ 				friends = friends.sort( function(a, b){
+ 					if( a.last_name < b.last_name ) return -1
+ 					if( a.last_name > b.last_name ) return 1;
+ 					if( a.last_name == b.last_name ){
+ 						if ( a.first_name < b.first_name ) return -1;
+ 						if ( a.first_name > b.first_name ) return 1;
+ 						return 0;
+ 					}
+ 				});
+ 				vk.ports.getPostFriends.send(friends);
+ 				vk.ports.getPostGroups.send(admin_groups);
+ 			});
+ 		}
+
+
+
+		function onVkWindowResized(width, height){
+			windowHeight = height;
+			vk.ports.resize.send([windowHeight, windowScrollTop]);
+		}
+
+		function onVkScroll(scrollTop, winHeight){
+			windowScrollTop = scrollTop;
+			windowHeight = winHeight;
+			vk.ports.resize.send([windowHeight, windowScrollTop]);
+
+			//console.log("OnScroll: " + scrollTop + " " + winHeight);
+			var p1 = document.getElementById("post-column1");
+			var p2 = document.getElementById("post-column2");
+			var p3 = document.getElementById("post-column3");
+			var bdy = document.getElementsByTagName("body")[0];
+			if( p1 && p2 && p3){
+				var min = Math.min(p1.offsetHeight, p2.offsetHeight, p3.offsetHeight);
+				var max = Math.max(p1.offsetHeight, p2.offsetHeight, p3.offsetHeight);
+				//alert(document.body.scrollTop  + " " +  min)
+				var currentTime = (new Date()).getTime();
+				if( (scrollTop + winHeight + 2000 > min) && currentTime > lastGetTime + 1000  /*jsonpCount == 0*/){
+					//alert("need data! " + jsonpCount  );
+					lastGetTime = currentTime;
+					wallGet(currentGroup);
+				}
+				//console.log("Body height: " + bdy.offsetHeight);
+				if( max + 160 > appHeight){
+					VK.callMethod("resizeWindow", appWidth, max + 160);
+					appHeight = max + 160;
+				}
+			}
+		}
+
+		
+		getVKInfo(); 
+
+		vk.ports.htmlGroupClick.subscribe(onGroupClick);
+		vk.ports.htmlToggleClick.subscribe(onToggleClick);
+		vk.ports.repostClick.subscribe(onRepostClick);
+
+
+		wallGet("-32015300");
+		groupsGet(Groups.getAllGroupsString());
+		
+
+		/**------- requests -------**/
+		function groupsGet(groups){
+			JSONP("https://api.vk.com/method/groups.getById?v=5.25&group_ids=" + groups, onGroupsGet );
+		}
+		function onGroupsGet(json){
+			Groups.groupsData = json.response;
+			vk.ports.getGroups.send( Groups.getGroupsByName("Юмор") );
+		}
+
+		function wallGet(owner_id){
+			if( currentGroupOffset == 0 ){
+				vk.ports.getWallPosts.send([0, []]); 	
+			}
+			VK.api("wall.get", {v:5.25, count: 60, owner_id: owner_id, offset: currentGroupOffset}, onWallGet);
+			currentGroupOffset += 60;
+			jsonpCount++;
+			currentGroup = owner_id;
+		}
+		function onWallGet(json){
+			var posts = parseJson(json);
+			var sortPosts = posts.sort( function(a,b){ return b.likes-a.likes } )
+				.slice(0, 40).sort( function(a, b){ return a.date > b.date ? -1 : 1} );
+			vk.ports.getWallPosts.send([currentGroupOffset, sortPosts]); 
+			//console.log("WallGet posts.length: " + posts.length);
+			//currentGroupOffset += json.response.items.length;
+			jsonpCount--;
+		}
+
+
+		/** ------ actions -------**/
+
+		function onGroupClick(id){
+			currentGroup = "-" + id.toString()
+			currentGroupOffset = 0;
+			wallGet(currentGroup);
+			VK.callMethod("resizeWindow", appWidth, 2000);
+			appHeight = 2000;
+		}
+
+		function onToggleClick(name){
+			var currentGroups = Groups.getGroupsByName(name);
+			vk.ports.getGroups.send(currentGroups);
+			if( currentGroups.length > 0){
+				onGroupClick(currentGroups[0].id);
+			}
+		}
+
+		function onRepostClick(postData){
+			var post = postData[0];
+			var owner_id = postData[1];
+			if( owner_id == 0 ){
+				owner_id = viewer_id;
+			}
+			//console.log("RepostClick: " + post.text);
+			//console.log("RepostClick: " + owner_id);
+			//alert(JSON.stringify(post));
+
+			
+			var getPhoto = function(photo){ 
+				return "photo" + photo.owner_id + "_" + photo.id;
+			}
+			var getAudio = function(audio){
+				return "audio" + audio.owner_id + "_" + audio.id;
+			}
+
+			var atts = post.photos.map( getPhoto ).concat( post.audios.map( getAudio));
+			var message = (atts.length > 0) ? addLinkText(post.text) : post.text;
+			atts.push("http://vk.com/nicepost");
+			var strAtts = atts.join(",");
+			var params = {v: "5.26", owner_id: owner_id, message: message, attachments: strAtts};
+	        
+	        if( owner_id.toString().charAt(0) == "-"){
+            	params["from_group"] = 1;
+        	}
+
+			VK.api("wall.post", params, function(response){
+
+			})
+
+			function addLinkText(text) {
+				galka_smile =  "&#10004;";
+    			hand_smile =  "&#128077;";
+		        if (text.indexOf("NicePost") == -1) {
+		            if (text != "") {
+		                text += "\n\n";
+		            }
+		            text += "Отправлено через: vk.com/NicePost";
+		            if (text.indexOf(galka_smile) == -1 && text.indexOf(hand_smile) == -1) {
+		                text += " " + galka_smile + hand_smile;
+		            }
+		        }
+		        return text;
+		    }
+		}
+
+
+	
+
+
+		/**--------------------------------- Parsing data ---------------------**/
+
+		function parseJson(json){
+			var rawPosts = json.response.items;
+			var len = rawPosts.length;
+			var posts = [];
+			console.log("Clearing start: " + (new Date()).getTime());
+			for( var i = 0; i < len; i++){
+				var post = toRecord(rawPosts[i]);
+				if( post.text == "" 
+					&& post.photos.length == 0 
+					&& post.audios.length == 0 ){
+					continue;
+				}
+				posts.push(post);
+			}
+			console.log("Clearing stop: " + (new Date()).getTime());
+			return posts;
+			//return json.response.items.map(toRecord);	
+		}
+
+		function toRecord(postObject){
+			var rec = {}
+			rec.id = postObject.id;
+			rec.text = postObject.text;
+			if( rec.text.indexOf("cards#") > 0 
+				|| rec.text.indexOf("fotomimi") > 0
+				|| rec.text.indexOf("congratulation_vk") > 0){
+				rec.text = "";
+			}
+			rec.date = postObject.date;
+			rec.date_str = unixTimeToStr(rec.date);
+			rec.likes = postObject.likes.count;
+			rec.reposts = postObject.reposts.count;
+
+			if( postObject.attachments == null) {
+				postObject.attachments = [];
+			}
+			parseAttachments(rec, postObject.attachments);
+			return rec;
+		}
+		
+		function parseAttachments(rec, arr){
+			var photos = [];
+			var audios = [];
+			for(var i = 0, len = arr.length; i < len; i++){
+				if( arr[i].type == "photo"){
+					var photo = {};
+					photo.photo_75 = arr[i].photo.photo_75;
+					photo.photo_130 = arr[i].photo.photo_130;
+					photo.photo_604 = arr[i].photo.photo_604;
+					photo.id = arr[i].photo.id;
+					photo.owner_id = arr[i].photo.owner_id;
+					photo.width = arr[i].photo.width ? arr[i].photo.width : 0;
+					photo.height = arr[i].photo.height ? arr[i].photo.height : 0;
+					photos.push(photo);
+				}
+				if( arr[i].type == "audio"){
+					var audio = {};
+					audio.id = arr[i].audio.id;
+					audio.owner_id = arr[i].audio.owner_id;
+					audio.artist = arr[i].audio.artist;
+					audio.title = arr[i].audio.title;
+					audios.push(audio);
+				}
+			}
+			rec.photos = photos;
+			rec.audios = audios;
+		}	
+
+		function unixTimeToStr(unixTime){
+            var date = new Date(unixTime*1000);
+            var day = date.getDate();
+            var month = date.getMonth();
+            var year = date.getFullYear();
+            var hours = date.getHours();
+            var minutes = date.getMinutes();
+            var timeStr = hours < 10 ? "0" + hours : hours.toString();
+            timeStr += ":" + (minutes < 10 ? "0" + minutes : minutes.toString());
+
+            var nowDate = new Date();
+            var dayStr = "";
+            if( nowDate.getDate() == day && nowDate.getMonth() == month && nowDate.getFullYear() == year){
+                dayStr = "в ";
+            } else
+            if( nowDate.getDate() == day+1 && nowDate.getMonth() == month && nowDate.getFullYear() == year){
+                dayStr = "вчера в ";
+            } else{
+                dayStr = day + " " +  getSmallMonth(month) + " в ";
+            }
+            return dayStr + timeStr;
+		}
+	
+		function getMonth(m){
+	        var arr = ["января", "февраля", "марта", "апреля", "мая", "июня",
+	            "июля","августа",  "сентября", "октября", "ноября", "декабря" ];
+	        return arr[m];
+		}
+		
+		function getSmallMonth(m){
+	        var arr = ["янв", "фев", "мар", "апр", "мая", "июн", "июл", "авг", "сен", "окт", "ноя", "дек" ];
+	        return arr[m];
+	    }
+
+	</script>
+	
+</html>

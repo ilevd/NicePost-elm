@@ -1,0 +1,6 @@
+#*.elm
+build/
+cache/
+elm_dependencies/
+elm-stuff/
+test/
