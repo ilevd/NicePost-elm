@@ -1,10 +1,10 @@
 # NicePost
 
-News app for vk.com written in Elm (http://elm-lang.org)
+News app for vk.com written in [Elm](http://elm-lang.org).
 
-Old flash version: https://github.com/ilevd/NicePost-flash
+Old flash version [here](https://github.com/ilevd/NicePost-flash).
 
-You can view app here: http://vk.com/nicepost
+You can view app [here](http://vk.com/nicepost).
 
 
 ## License
