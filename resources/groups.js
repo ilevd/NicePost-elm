@@ -7,7 +7,6 @@ var Groups = {
     Auto : [
         "vk.supercar",
         "world_best_cars",
-        "tuning_russia_avto",
         "autocentre_ua",
         "mobi_net",
         "bpanpub",
@@ -18,8 +17,7 @@ var Groups = {
         "myquattro",
         "vk_journal_avtotuning",
         "auto_book",
-        "taz_and_the_bass",
-        "autonewsu"
+        "taz_and_the_bass"
     ],
 
     Brain : [
@@ -33,27 +31,21 @@ var Groups = {
         "tripdiary",
         "the_intellectuals",
         "ru.esquire",
-        "refact",
-        "globusfact"
+        "refact"
     ],
 
     Business : [
         "bu_life",
-        "justbusiness1",
         "business",
         "ideibiza",
-        //"bizsekrety",
         "smmrussia",
-
         "businessquotes",
         "fazarosta",
         "biztimes",
         "business.partner",
         "liderstvoiuspeh",
-
         "ot_0_do_1000000",
         "spekylyant",
-        "funkybiz",
         "towin",
         "nakedbiz",
         "rus_business",
@@ -91,19 +83,13 @@ var Groups = {
         "moda_pomode",
         "fshn_blg",
         "fashioneira",
-        "o_mode",
-
         "stylemo",
-        "vk.fashion_and_style",
         "fashion360",
-        "fashion___time",
         "fashiongonewild",
-
         "stilemoda",
         "fashion_foto_blog",
         "amen_fashion",
         "vogue_room",
-        //"fashionroll",
         "blckfashion",
         "heelsandties"
     ],
@@ -133,7 +119,6 @@ var Groups = {
         "mdk",
         "pozitiv",
         "trahninormalnost1",
-        "palnom6",
         "i.like.this",
         "overhear",
         "onlyorly" ,
@@ -162,7 +147,6 @@ var Groups = {
         "world_game",
         "gaming_of_news",
         "gameshumour",
-        "gamehumour",
         "game_art"
     ],
 
@@ -176,30 +160,21 @@ var Groups = {
         "mudrostyle",
         "the.business",
         "positiv_sun",
-        "probuzhdenie_dao_dzen_osoznanie",
         "public23974705",
         "bestwordsofpeace",
         "maxatma_gandi",
         "zitati_velikih_ludej"
-        //,
-        /*"zitati_velikih_ludej",
-        "zitati_velikih_ludej",
-        "zitati_velikih_ludej",
-        "zitati_velikih_ludej"*/
-
     ],
 
     Images : [
         "wiba_image",
         "club_tenderness_by",
-        "wiba_pretty",
         "awesome__world",
         "travelis",
         "31060148",
         "glorious_life",
         "club33944228",
         "top_sens",
-        "beautifullyl",
         "club39914469"
     ],
 
@@ -223,20 +198,15 @@ var Groups = {
     ],
 
     Music : [
-        "topmelody",
-        //"klassnenkiy_ru",
         "public_of_music",
         "clubmusictlt",
-        "wiba_music",
         "ellotv",
-        
         "onlineradio101ru",
         "msc_e",
         "plmusic",
         "rpfm",
         "europaplustv",
         "exclusive_muzic",
-
         "music.blog",
         "music_overdose_mo",
         "music.beats",
@@ -247,7 +217,6 @@ var Groups = {
 
     Recepts : [
         "my_recept",
-        "wiba_recipe",
         "vk.cooking",
         "cookinder",
         "best.recipes",
@@ -259,7 +228,6 @@ var Groups = {
         "dietsrecipes",
         "megavkusnyashka",
         "the_tastiest_food",
-        "bon_bon13",
         "vkusnovato",
         "culinar.page"
     ],
