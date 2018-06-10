@@ -58,15 +58,18 @@
 
 
     function parseVkData() {
+        console.log("Parse VK data 1");
         var rawData = document.location.search.substr(1).split("&");
         var data = {};
         for (i = 0; i < rawData.length; i++) {
             var keyValue = rawData[i].split('=');
             data[keyValue[0]] = keyValue[1];
         }
+        console.log("Parse VK data 2");
         //console.log(decodeURIComponent(  data["api_result"] ));
         console.log(data["viewer_id"]);
         viewer_id = data["viewer_id"];
+        console.log("Parse VK data 3");
         var api_result = JSON.parse(decodeURIComponent(data["api_result"]));
         var access_token = JSON.parse(decodeURIComponent(data["access_token"]));
         console.log("Viewer id: " + data["viewer_id"]);
