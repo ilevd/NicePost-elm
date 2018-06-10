@@ -4,3 +4,4 @@ cache/
 elm_dependencies/
 elm-stuff/
 test/
+.idea
